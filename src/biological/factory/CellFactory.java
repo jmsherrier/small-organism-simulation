@@ -29,9 +29,8 @@ public class CellFactory {
         }
     }
     
-    private static Cell createPhotosyntheticCell(String strain, List<Gene> genes, 
+    private static Cell createPhotosyntheticCell(String strain, List<Gene> genes,
                                                double volume, double dryFraction) {
-        System.out.println("Creating MED4 cell with photosynthetic genes...");
         
         double cytoplasmVol = volume * 0.85;
         double membraneVol = volume * 0.15;
@@ -53,7 +52,6 @@ public class CellFactory {
     
     private static Cell createHeterotrophicCell(String strain, List<Gene> genes,
                                               double volume, double dryFraction) {
-        System.out.println("Creating E. coli cell with respiratory genes...");
         
         double cytoplasmVol = volume * 0.85;
         double membraneVol = volume * 0.15;
@@ -74,7 +72,6 @@ public class CellFactory {
     
     private static Cell createEukaryoticCell(String strain, List<Gene> genes,
                                         double volume, double dryFraction) {
-        System.out.println("Creating yeast cell with eukaryotic genes...");
         
         double cytoplasmVol = volume * 0.7;
         double membraneVol = volume * 0.1;

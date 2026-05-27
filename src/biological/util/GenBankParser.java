@@ -115,7 +115,7 @@ public class GenBankParser {
         String url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=" +
                 accession + "&rettype=gb&retmode=text";
 
-        try (InputStream in = new java.net.URL(url).openStream();
+        try (InputStream in = java.net.URI.create(url).toURL().openStream();
              FileOutputStream fos = new FileOutputStream(outputPath)) {
             byte[] buffer = new byte[4096];
             int bytesRead;

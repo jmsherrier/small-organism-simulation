@@ -1,57 +1,32 @@
-## **Foundational Improvement Goals**
+# Development Goals
 
-### **Core Scientific Accuracy**
-- Thermodynamic Consistency - Energy and mass balance enforcement, ATP accounting
-- Experimental Validation - Match established growth rates and composition data  
-- Parameter Sensitivity Analysis - Identify biologically critical parameters
-- Uncertainty Quantification - Statistical error bounds on predictions
+## Implemented
 
-### **Physical Realism**
-- Molecular Crowding Effects - Volume exclusion and reduced diffusion modeling
-- Proper Stochasticity - Molecular noise and random expression events
-- Ionic Strength Effects - Electrostatic interactions and pH dependence
-- Membrane Physics - Surface tension and curvature effects
+- Genomic data ingestion from NCBI GenBank (efetch API + flat-file parser)
+- Three cell types: photosynthetic (MED4), heterotrophic (E. coli), eukaryotic (yeast)
+- Mass calculations from biological density and dry-mass fraction constants
+- Time-series simulation engine with 15-minute time steps
+- Diurnal irradiance cycle (sinusoidal 12 h:12 h L:D) for phototrophic growth
+- Multi-factor environmental scaling: f(T, pH, salinity, [O₂], irradiance)
+- Experimental validation against published growth rates and cell composition
+- Sensitivity analysis via central-difference parameter perturbation
+- ATP production/consumption energy balance
+- Preset simulation environments (marine photic, laboratory aerobic, yeast fermentation)
 
-### **Numerical Robustness**
-- Advanced Time Integration - Adaptive step sizing and numerical stability
-- Spatial Resolution - Basic cellular compartmentalization and gradient modeling
-- Convergence Testing - Numerical accuracy verification
-- Conservation Laws - Mass and energy conservation enforcement
+## Near-Term
 
-### **Biological Detail**
-- Genome-Informed Metabolism - Flux balance analysis from gene content
-- Protein Allocation - Ribosome capacity and expression cost modeling
-- Stress Response Models - Heat shock and oxidative stress responses
-- Cell Cycle Integration - Division timing and DNA replication coordination
+- Nutrient depletion model coupling uptake rates to population density
+- Population stationary phase via substrate saturation (Monod kinetics)
+- Additional sensitivity parameters: membrane surface area, respiration efficiency
 
-### **Validation Framework**
-- Experimental Benchmark Suite - Standardized biological test cases
-- Multi-Scale Validation - Molecular to population scale verification
-- Parameter Optimization - Automated fitting to experimental data
-- Predictive Testing - Validation against unseen experimental conditions
+## Longer-Term
 
-### **Computational Performance**
-- Efficient Algorithms - Caching, memoization, and computational optimization
-- Parallelization Ready - Multi-core and GPU capability design
-- Memory Management - Efficient data structure implementation
-- Scalability Design - Support for larger and more complex simulations
-
-### **Software Quality**
-- Comprehensive Testing - Unit tests and integration test coverage
-- Documentation - Complete API and theoretical documentation
-- Reproducibility - Version control and random seed management
-- Modular Design - Plug-in architecture for future enhancements
-
-### **Model Extensibility**
-- Standardized Interfaces - Simplified addition of new biological components
-- Multiple Resolution Levels - Coarse-grained to detailed modeling capability
-- Hybrid Simulation Ready - Interface design for multi-scale integration
-- Community Standards - SBML and FBA compatibility support
+- Flux balance analysis from gene content
+- Stochastic gene expression (Gillespie algorithm)
+- Multi-cell co-culture competition
+- SBML export for systems biology tool interoperability
 
 ---
 
-**Framework Version**: 2.2 
-**Development Status**: Active  
-**Compatibility**: Java 21+  
-**License**: Academic/Research Use  
-**Documentation**: Comprehensive theory and API documentation available
+**Version**: 2.3  
+**Compatibility**: Java 21+

@@ -5,6 +5,9 @@ import biological.components.Gene;
 import biological.factory.CellFactory;
 import biological.sensitivity.SensitivityAnalyzer;
 import biological.sensitivity.SensitivityResult;
+import biological.simulation.SimulationEngine;
+import biological.simulation.SimulationEnvironment;
+import biological.simulation.SimulationResult;
 import biological.util.GenBankParser;
 import biological.util.YeastGeneLoader;
 import biological.validation.ExperimentalValidator;
@@ -15,114 +18,142 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Advanced Cellular Simulation with validation and sensitivity analysis
+ * Entry point for the Prochlorococcus Cellular Simulation Framework.
+ * Runs genomic data ingestion, static property display, time-series simulation,
+ * experimental validation, and sensitivity analysis for three cell types.
  */
 public class AdvancedCellSimulation {
-    
+
     private static final String DATA_DIR = "genbank_data";
-    
+    private static final String LINE = "═".repeat(60);
+    private static final String THIN = "─".repeat(60);
+
     public static void main(String[] args) {
-        System.out.println("=== ADVANCED CELLULAR SIMULATION ===");
-        System.out.println("With scientific validation and sensitivity analysis");
-        System.out.println();
-        
+        printHeader();
+
         try {
             java.nio.file.Files.createDirectories(Paths.get(DATA_DIR));
-            
-            System.out.println("1. DOWNLOADING AND PARSING GENOMIC DATA...");
-            
-            // MED4
-            String med4Accession = "BX548174";
-            String med4File = DATA_DIR + "/MED4.gb";
-            GenBankParser.downloadGenBankFile(med4Accession, med4File);
-            List<Gene> med4Genes = GenBankParser.parseGenBankFile(med4File);
-            System.out.println("MED4 genes parsed: " + med4Genes.size() + " genes");
-            
-            // E. coli
-            String ecoliAccession = "U00096";
-            String ecoliFile = DATA_DIR + "/ECOLI.gb";
-            GenBankParser.downloadGenBankFile(ecoliAccession, ecoliFile);
-            List<Gene> ecoliGenes = GenBankParser.parseGenBankFile(ecoliFile);
-            System.out.println("E. coli genes parsed: " + ecoliGenes.size() + " genes");
-            
-            // Yeast - use realistic gene generator instead of broken GenBank parsing
-            System.out.println("Generating realistic yeast genes...");
-            List<Gene> yeastGenes = YeastGeneLoader.loadYeastGenes();
-            System.out.println("Yeast genes generated: " + yeastGenes.size() + " genes");
-            
-            System.out.println();
-            System.out.println("2. CREATING CELL TYPES...");
-            
-            Cell med4Cell = createMED4WithGenes(med4Genes);
-            Cell ecoliCell = createEcoliWithGenes(ecoliGenes);
-            Cell yeastCell = createYeastWithGenes(yeastGenes);
-            
-            System.out.println();
-            System.out.println("3. SIMULATION RESULTS:");
-            System.out.println();
-            
-            simulateAndDisplay(med4Cell, "Prochlorococcus MED4");
-            simulateAndDisplay(ecoliCell, "E. coli K-12");
-            simulateAndDisplay(yeastCell, "Saccharomyces cerevisiae");
-            
-            System.out.println();
-            System.out.println("4. SCIENTIFIC VALIDATION:");
-            System.out.println();
-            
+
+            // ── 1. Genomic data ingestion ─────────────────────────────────
+            section("1. GENOMIC DATA INGESTION");
+            List<Gene> med4Genes  = fetchGenes("BX548174", DATA_DIR + "/MED4.gb",  "Prochlorococcus MED4");
+            List<Gene> ecoliGenes = fetchGenes("U00096",   DATA_DIR + "/ECOLI.gb", "Escherichia coli K-12");
+            List<Gene> yeastGenes = loadYeastGenes();
+
+            // ── 2. Cellular properties ────────────────────────────────────
+            section("2. CELLULAR PROPERTIES");
+            Cell med4Cell  = CellFactory.createCell("photosynthetic", "MED4",    med4Genes,  0.6,  0.30);
+            Cell ecoliCell = CellFactory.createCell("heterotrophic",  "E. coli", ecoliGenes, 1.0,  0.25);
+            Cell yeastCell = CellFactory.createCell("eukaryotic",     "Yeast",   yeastGenes, 10.0, 0.28);
+
+            printCellTable(med4Cell, ecoliCell, yeastCell);
+
+            // ── 3. Time-series simulation ─────────────────────────────────
+            section("3. TIME-SERIES SIMULATION  (24 h, Δt = 15 min)");
+            SimulationEngine engine = new SimulationEngine();
+
+            runAndPrint(engine, med4Cell,
+                SimulationEnvironment.marinePhotic().build(),
+                "Prochlorococcus MED4 — marine euphotic zone, 12 h:12 h L:D",
+                24.0, 12);
+
+            runAndPrint(engine, ecoliCell,
+                SimulationEnvironment.laboratoryAerobic().build(),
+                "Escherichia coli K-12 — laboratory aerobic, 37 °C",
+                12.0, 8);
+
+            runAndPrint(engine, yeastCell,
+                SimulationEnvironment.yeastFermentation().build(),
+                "Saccharomyces cerevisiae — batch fermentation, 30 °C",
+                24.0, 8);
+
+            // ── 4. Experimental validation ────────────────────────────────
+            section("4. EXPERIMENTAL VALIDATION");
             ExperimentalValidator validator = new ExperimentalValidator();
+            printValidation(validator, med4Cell,  "MED4");
+            printValidation(validator, ecoliCell, "E. coli");
+            printValidation(validator, yeastCell, "Yeast");
+
+            // ── 5. Sensitivity analysis ───────────────────────────────────
+            section("5. SENSITIVITY ANALYSIS  (MED4, 10% parameter perturbation)");
             SensitivityAnalyzer sensitivityAnalyzer = new SensitivityAnalyzer();
-            
-            ValidationResult med4Validation = validator.validateCell(med4Cell, "MED4");
-            ValidationResult ecoliValidation = validator.validateCell(ecoliCell, "E. coli");
-            ValidationResult yeastValidation = validator.validateCell(yeastCell, "Yeast");
-            
-            med4Validation.printResults();
-            System.out.println();
-            ecoliValidation.printResults();
-            System.out.println();
-            yeastValidation.printResults();
-            
-            System.out.println();
-            System.out.println("5. SENSITIVITY ANALYSIS:");
-            System.out.println();
-            
-            List<String> testParams = Arrays.asList("max_growth_rate", "dry_fraction");
-            SensitivityResult sensitivity = sensitivityAnalyzer.analyzeCell(med4Cell, testParams);
+            List<String> params = Arrays.asList("max_growth_rate", "dry_fraction");
+            SensitivityResult sensitivity = sensitivityAnalyzer.analyzeCell(med4Cell, params);
             sensitivity.printResults();
-            
+
             System.out.println();
-            System.out.println("=== SIMULATION COMPLETED SUCCESSFULLY ===");
-            
+            System.out.println(LINE);
+            System.out.println("  Simulation completed successfully.");
+            System.out.println(LINE);
+
         } catch (IOException e) {
-            System.err.println("Error processing genomic data: " + e.getMessage());
+            System.err.println("Genomic data error: " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Simulation error: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
-    private static Cell createMED4WithGenes(List<Gene> med4Genes) {
-        System.out.println("Creating MED4 cell with photosynthetic genes...");
-        return CellFactory.createCell("photosynthetic", "MED4", med4Genes, 0.6, 0.3);
-    }
-    
-    private static Cell createEcoliWithGenes(List<Gene> ecoliGenes) {
-        System.out.println("Creating E. coli cell with respiratory genes...");
-        return CellFactory.createCell("heterotrophic", "E. coli", ecoliGenes, 1.0, 0.25);
-    }
-    
-    private static Cell createYeastWithGenes(List<Gene> yeastGenes) {
-        System.out.println("Creating yeast cell with eukaryotic genes...");
-        return CellFactory.createCell("eukaryotic", "Yeast", yeastGenes, 10.0, 0.2);
-    }
-    
-    private static void simulateAndDisplay(Cell cell, String name) {
-        System.out.println("--- " + name + " ---");
-        System.out.printf("Growth rate: %.2f doublings/hour%n", cell.getGrowthRate());
-        System.out.printf("Cell volume: %.2f um3%n", cell.getVolumeMicron3());
-        System.out.printf("Dry mass: %.1e Da%n", cell.getDryDaltonsWithGenome());
-        System.out.printf("Wet mass: %.1e Da%n", cell.getWetDaltons());
-        System.out.printf("Genome mass: %.1e Da%n", cell.getGenomeMass());
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private static void printHeader() {
+        System.out.println(LINE);
+        System.out.println("  PROCHLOROCOCCUS CELLULAR SIMULATION FRAMEWORK");
+        System.out.println("  Version 2.3  |  Java 21  |  NCBI GenBank Integration");
+        System.out.println(LINE);
         System.out.println();
+    }
+
+    private static void section(String title) {
+        System.out.println();
+        System.out.println(THIN);
+        System.out.println("  " + title);
+        System.out.println(THIN);
+    }
+
+    private static List<Gene> fetchGenes(String accession, String path, String label) throws IOException {
+        GenBankParser.downloadGenBankFile(accession, path);
+        List<Gene> genes = GenBankParser.parseGenBankFile(path);
+        System.out.printf("  ✓ %-30s [%s]  %,d genes%n", label, accession, genes.size());
+        return genes;
+    }
+
+    private static List<Gene> loadYeastGenes() {
+        List<Gene> genes = YeastGeneLoader.loadYeastGenes();
+        System.out.printf("  ✓ %-30s %,d genes  (16 chromosomes, synthetic)%n",
+            "Saccharomyces cerevisiae", genes.size());
+        return genes;
+    }
+
+    private static void printCellTable(Cell... cells) {
+        System.out.printf("  %-16s %-12s %-16s %-16s %-16s%n",
+            "Cell", "Volume(µm³)", "Wet Mass(Da)", "Dry Mass(Da)", "Genome Mass(Da)");
+        System.out.println("  " + "─".repeat(78));
+        for (Cell c : cells) {
+            System.out.printf("  %-16s %-12.2f %-16.3e %-16.3e %-16.3e%n",
+                c.getStrain(),
+                c.getVolumeMicron3(),
+                c.getWetDaltons(),
+                c.getDryDaltonsWithGenome(),
+                c.getGenomeMass());
+        }
+    }
+
+    private static void runAndPrint(SimulationEngine engine, Cell cell,
+                                    SimulationEnvironment env,
+                                    String label, double hours, int rows) {
+        System.out.println();
+        System.out.println("  " + label);
+        SimulationResult result = engine.runSimulation(cell, env, hours);
+        result.printTimeSeries(rows);
+        System.out.println();
+        result.printSummary();
+    }
+
+    private static void printValidation(ExperimentalValidator validator, Cell cell, String strain) {
+        System.out.println();
+        System.out.println("  [" + strain + "]");
+        ValidationResult r = validator.validateCell(cell, strain);
+        r.printResults();
     }
 }

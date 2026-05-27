@@ -8,11 +8,12 @@ import biological.properties.RespirationProperties;
 import java.util.*;
 
 /**
- * Heterotrophic bacterial cell implementation
+ * Heterotrophic bacterial cell (e.g., Escherichia coli).
+ * Growth rate is governed by maximum physiology rate scaled by respiration efficiency.
  */
 public class HeterotrophicBacterium extends Cell {
     private final RespirationProperties respiration;
-    
+
     public HeterotrophicBacterium(String strain, double volumeMicron3, double dryFraction,
                                 Cytoplasm cytoplasm, GenomeProperties genomeProperties,
                                 Physiology physiology, PlasmaMembrane membrane,
@@ -20,32 +21,25 @@ public class HeterotrophicBacterium extends Cell {
         super(strain, volumeMicron3, dryFraction, cytoplasm, genomeProperties, physiology, membrane);
         this.respiration = respiration;
     }
-    
+
     @Override
     public double getGrowthRate() {
         return physiology.getMaxGrowthRate() * respiration.getRespirationEfficiency();
     }
-    
+
     @Override
     public Map<String, Double> getNutrientUptakeRates() {
         Map<String, Double> rates = new HashMap<>();
         Map<String, Double> requirements = physiology.getNutrientRequirements();
-        
         for (String nutrient : requirements.keySet()) {
             if (physiology.canUtilizeNutrient(nutrient)) {
-                double requirement = requirements.get(nutrient);
-                double uptake = requirement * membrane.getSurfaceArea() * 0.0001;
+                double uptake = requirements.get(nutrient) * membrane.getSurfaceArea() * 0.0001;
                 rates.put(nutrient, uptake);
             }
         }
         return rates;
     }
-    
-    public double getRespirationRate() {
-        return respiration.calculateRespirationRate();
-    }
 
-    // Add these methods to your existing HeterotrophicBacterium class
     @Override
     protected Map<String, Double> calculateATPProduction() {
         Map<String, Double> production = new HashMap<>();
@@ -57,11 +51,10 @@ public class HeterotrophicBacterium extends Cell {
     protected Map<String, Double> calculateATPConsumption() {
         Map<String, Double> consumption = new HashMap<>();
         consumption.put("biosynthesis", getGrowthRate() * 800);
-        consumption.put("maintenance", 40.0);
+        consumption.put("maintenance",  40.0);
         return consumption;
     }
-    
-    public boolean canRespire() {
-        return respiration.canPerformAerobicRespiration();
-    }
+
+    public double getRespirationRate()  { return respiration.calculateRespirationRate(); }
+    public boolean canRespire()         { return respiration.canPerformAerobicRespiration(); }
 }
