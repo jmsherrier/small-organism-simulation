@@ -1,4 +1,4 @@
-# Prochlorococcus Cellular Simulation Framework
+# Cellular Simulation Framework
 
 [![Build & Test](https://github.com/jmsherrier/small-organism-simulation/actions/workflows/build.yml/badge.svg)](https://github.com/jmsherrier/small-organism-simulation/actions/workflows/build.yml)
 
