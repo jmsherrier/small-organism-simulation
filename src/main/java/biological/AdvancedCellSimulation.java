@@ -5,6 +5,7 @@ import biological.components.Gene;
 import biological.factory.CellFactory;
 import biological.sensitivity.SensitivityAnalyzer;
 import biological.sensitivity.SensitivityResult;
+import biological.simulation.SimulationConfig;
 import biological.simulation.SimulationEngine;
 import biological.simulation.SimulationEnvironment;
 import biological.simulation.SimulationResult;
@@ -13,7 +14,10 @@ import biological.util.YeastGeneLoader;
 import biological.validation.ExperimentalValidator;
 import biological.validation.ValidationResult;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,20 +28,24 @@ import java.util.List;
  */
 public class AdvancedCellSimulation {
 
-    private static final String DATA_DIR = "genbank_data";
     private static final String LINE = "═".repeat(60);
     private static final String THIN = "─".repeat(60);
+    private static final String DATE_STAMP =
+        LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
 
     public static void main(String[] args) {
         printHeader();
+        SimulationConfig config = SimulationConfig.fromArgs(args);
 
         try {
-            java.nio.file.Files.createDirectories(Paths.get(DATA_DIR));
+            java.nio.file.Files.createDirectories(Paths.get(config.getDataDir()));
+            java.nio.file.Files.createDirectories(Paths.get(config.getOutputDir()));
 
             // ── 1. Genomic data ingestion ─────────────────────────────────
             section("1. GENOMIC DATA INGESTION");
-            List<Gene> med4Genes  = fetchGenes("BX548174", DATA_DIR + "/MED4.gb",  "Prochlorococcus MED4");
-            List<Gene> ecoliGenes = fetchGenes("U00096",   DATA_DIR + "/ECOLI.gb", "Escherichia coli K-12");
+            String dataDir = config.getDataDir();
+            List<Gene> med4Genes  = fetchGenes("BX548174", dataDir + "/MED4.gb",  "Prochlorococcus MED4");
+            List<Gene> ecoliGenes = fetchGenes("U00096",   dataDir + "/ECOLI.gb", "Escherichia coli K-12");
             List<Gene> yeastGenes = loadYeastGenes();
 
             // ── 2. Cellular properties ────────────────────────────────────
@@ -52,20 +60,20 @@ public class AdvancedCellSimulation {
             section("3. TIME-SERIES SIMULATION  (24 h, Δt = 15 min)");
             SimulationEngine engine = new SimulationEngine();
 
-            runAndPrint(engine, med4Cell,
+            runAndExport(engine, med4Cell,
                 SimulationEnvironment.marinePhotic().build(),
                 "Prochlorococcus MED4 — marine euphotic zone, 12 h:12 h L:D",
-                24.0, 12);
+                config.getMed4Duration(), 12, "MED4", config.getOutputDir());
 
-            runAndPrint(engine, ecoliCell,
+            runAndExport(engine, ecoliCell,
                 SimulationEnvironment.laboratoryAerobic().build(),
                 "Escherichia coli K-12 — laboratory aerobic, 37 °C",
-                12.0, 8);
+                config.getEcoliDuration(), 8, "ECOLI", config.getOutputDir());
 
-            runAndPrint(engine, yeastCell,
+            runAndExport(engine, yeastCell,
                 SimulationEnvironment.yeastFermentation().build(),
                 "Saccharomyces cerevisiae — batch fermentation, 30 °C",
-                24.0, 8);
+                config.getYeastDuration(), 8, "YEAST", config.getOutputDir());
 
             // ── 4. Experimental validation ────────────────────────────────
             section("4. EXPERIMENTAL VALIDATION");
@@ -99,7 +107,7 @@ public class AdvancedCellSimulation {
     private static void printHeader() {
         System.out.println(LINE);
         System.out.println("  PROCHLOROCOCCUS CELLULAR SIMULATION FRAMEWORK");
-        System.out.println("  Version 2.3  |  Java 21  |  NCBI GenBank Integration");
+        System.out.println("  Version 2.4  |  Java 21  |  NCBI GenBank Integration");
         System.out.println(LINE);
         System.out.println();
     }
@@ -139,15 +147,25 @@ public class AdvancedCellSimulation {
         }
     }
 
-    private static void runAndPrint(SimulationEngine engine, Cell cell,
-                                    SimulationEnvironment env,
-                                    String label, double hours, int rows) {
+    private static void runAndExport(SimulationEngine engine, Cell cell,
+                                     SimulationEnvironment env, String label,
+                                     double hours, int rows, String filePrefix, String outputDir) {
         System.out.println();
         System.out.println("  " + label);
         SimulationResult result = engine.runSimulation(cell, env, hours);
         result.printTimeSeries(rows);
         System.out.println();
         result.printSummary();
+
+        try {
+            Path csv  = Path.of(outputDir, filePrefix + "_" + DATE_STAMP + "_simulation.csv");
+            Path json = Path.of(outputDir, filePrefix + "_" + DATE_STAMP + "_summary.json");
+            result.exportCsv(csv);
+            result.exportSummaryJson(json);
+            System.out.printf("  → Exported: %s%n", csv.getFileName());
+        } catch (IOException e) {
+            System.err.println("  Warning: could not write output files: " + e.getMessage());
+        }
     }
 
     private static void printValidation(ExperimentalValidator validator, Cell cell, String strain) {

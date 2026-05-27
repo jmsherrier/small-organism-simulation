@@ -57,12 +57,11 @@ public class SensitivityAnalyzer {
         try {
             switch (parameter) {
                 case "max_growth_rate" -> {
-                    if (cell.getPhysiology() instanceof BacterialPhysiology bacterialPhysiology) {
-                        bacterialPhysiology.setMaxGrowthRate(value);
-                    } else if (cell.getPhysiology() instanceof EukaryoticPhysiology eukaryoticPhysiology) {
-                        eukaryoticPhysiology.setMaxGrowthRate(value);
-                    } else if (cell.getPhysiology() instanceof MED4Strain.MED4Physiology mED4Physiology) {
-                        mED4Physiology.setMaxGrowthRate(value);
+                    switch (cell.getPhysiology()) {
+                        case BacterialPhysiology b -> b.setMaxGrowthRate(value);
+                        case EukaryoticPhysiology e -> e.setMaxGrowthRate(value);
+                        case MED4Strain.MED4Physiology m -> m.setMaxGrowthRate(value);
+                        default -> {}
                     }
                 }
                     

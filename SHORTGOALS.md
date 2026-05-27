@@ -12,12 +12,18 @@
 - Sensitivity analysis via central-difference parameter perturbation
 - ATP production/consumption energy balance
 - Preset simulation environments (marine photic, laboratory aerobic, yeast fermentation)
+- Monod kinetics nutrient depletion with Liebig's law minimum factor
+- Population stationary phase via substrate saturation
+- CSV and JSON export of simulation time series and summaries
+- External `simulation.properties` configuration with `--config` CLI override
+- Maven build system with JUnit 5 test suite
+- GitHub Actions CI/CD (build + test on every push)
+- Java 21 records (`ValidationMetric`, `ExperimentalData`) and pattern-matching switches
 
 ## Near-Term
 
-- Nutrient depletion model coupling uptake rates to population density
-- Population stationary phase via substrate saturation (Monod kinetics)
 - Additional sensitivity parameters: membrane surface area, respiration efficiency
+- Tune Monod Ks constants against experimental batch culture data
 
 ## Longer-Term
 
@@ -28,5 +34,6 @@
 
 ---
 
-**Version**: 2.3  
-**Compatibility**: Java 21+
+**Version**: 2.4  
+**Compatibility**: Java 21+  
+**Build**: Maven 3.9+

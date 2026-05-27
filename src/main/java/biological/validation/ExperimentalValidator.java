@@ -1,6 +1,8 @@
 package biological.validation;
 
 import biological.cells.Cell;
+import biological.cells.EukaryoticCell;
+import biological.organelles.Organelle;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +32,7 @@ public class ExperimentalValidator {
     
     private void validateGrowthRate(Cell cell, ExperimentalData expected, ValidationResult result) {
         double simulated = cell.getGrowthRate();
-        double experimental = expected.getGrowthRate();
+        double experimental = expected.growthRate();
         double error = Math.abs(simulated - experimental) / experimental;
         
         result.addMetric("growth_rate", simulated, experimental, error, 0.3);
@@ -109,6 +111,17 @@ public class ExperimentalValidator {
     
     public double getProteinFraction(String strain) {
         return proteinFractions.getOrDefault(strain, 0.5);
+    }
+
+    public double calculateTotalProteinMass(Cell cell) {
+        int count = cell.getCytoplasm().getSolubleProteins().size();
+        count += cell.getCytoplasm().getMembrane().getMembraneProteins().size();
+        if (cell instanceof EukaryoticCell euk) {
+            for (Organelle organelle : euk.getOrganelles()) {
+                count += organelle.getProteins().size();
+            }
+        }
+        return count * 40_000.0; // ~40 kDa average protein mass in Da
     }
     
     private Map<String, ExperimentalData> loadStandardValidationData() {

@@ -32,8 +32,8 @@ public class ValidationResult {
         System.out.println("=== VALIDATION RESULTS ===");
         for (ValidationMetric metric : metrics.values()) {
             System.out.printf("%s: simulated=%.3f, expected=%.3f, error=%.1f%% %s%n",
-                metric.getName(), metric.getSimulated(), metric.getExpected(),
-                metric.getError() * 100, metric.isWithinTolerance() ? "✓" : "✗");
+                metric.name(), metric.simulated(), metric.expected(),
+                metric.error() * 100, metric.isWithinTolerance() ? "✓" : "✗");
         }
         System.out.println("Overall validation: " + (isValid() ? "PASS" : "FAIL"));
     }

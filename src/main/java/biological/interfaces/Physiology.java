@@ -16,4 +16,13 @@ public interface Physiology {
     double getEnergyProductionRate();
     double getStressTolerance(String stressor);
     boolean canFormSpores();
+
+    /**
+     * Returns half-saturation constants (Ks) for Monod nutrient kinetics.
+     * Keys must match the nutrient names used in SimulationEnvironment.
+     * Default implementation returns an empty map (no Monod limitation applied).
+     */
+    default Map<String, Double> getMonodConstants() {
+        return Map.of();
+    }
 }

@@ -94,4 +94,13 @@ public class EukaryoticPhysiology implements Physiology {
     public Map<String, Double> getEnergyYields() {
         return new HashMap<>(energyYields);
     }
+
+    @Override
+    public Map<String, Double> getMonodConstants() {
+        // Half-saturation constants for S. cerevisiae batch fermentation
+        Map<String, Double> ks = new HashMap<>();
+        ks.put("glucose",   5.0);  // Ks ≈ 5 mg/L — yeast is efficient at low glucose
+        ks.put("nitrogen",  2.0);  // Ks for ammonium/organic N
+        return Collections.unmodifiableMap(ks);
+    }
 }

@@ -175,6 +175,16 @@ public class MED4Strain extends Prochlorococcus {
         @Override public double getEnergyProductionRate() { return 120.0; }
         @Override public double getStressTolerance(String stressor) { return 0.8; }
         @Override public boolean canFormSpores() { return false; }
+
+        @Override
+        public java.util.Map<String, Double> getMonodConstants() {
+            // Half-saturation constants calibrated to oligotrophic open-ocean conditions
+            return java.util.Map.of(
+                "nitrogen",   0.5,   // µM equivalent — adapted to low-N oligotrophic ocean
+                "phosphorus", 0.03,  // µM equivalent — classic Redfield P limitation
+                "iron",       0.001  // nM equivalent — iron often limits open-ocean cyanobacteria
+            );
+        }
     }
     
     public static class HighLightAdaptation {

@@ -1,6 +1,8 @@
 # Prochlorococcus Cellular Simulation Framework
 
-A Java simulation framework that models the physiology of three biologically distinct cell types — a marine cyanobacterium, a heterotrophic bacterium, and a unicellular eukaryote — using real genomic data fetched directly from NCBI GenBank.
+[![Build & Test](https://github.com/jmsherrier/small-organism-simulation/actions/workflows/build.yml/badge.svg)](https://github.com/jmsherrier/small-organism-simulation/actions/workflows/build.yml)
+
+A Java 21 simulation framework that models the physiology of three biologically distinct cell types — a marine cyanobacterium, a heterotrophic bacterium, and a unicellular eukaryote — using real genomic data fetched directly from NCBI GenBank.
 
 ---
 
@@ -103,17 +105,20 @@ Growth-rate errors fall within the range of inter-study experimental variability
 
 ## Build & Run
 
-Requirements: **Java 21+**
+Requirements: **Java 21+**, **Maven 3.9+**
 
 ```bash
-# Compile
-javac -cp . -d bin $(find src -name "*.java")
+# Build and run all tests
+mvn verify
 
-# Run main simulation
-java -cp bin biological.AdvancedCellSimulation
+# Run main simulation (after build)
+java -jar target/small-organism-simulation-2.3.0.jar
 
-# Run debug diagnostics
-java -cp bin biological.DebugMain
+# Run with a custom config
+java -jar target/small-organism-simulation-2.3.0.jar --config simulation.properties
+
+# Run diagnostics entry point
+mvn exec:java -Dexec.mainClass="biological.DebugMain"
 ```
 
 Genomic data is fetched on first run and cached in `genbank_data/`. Subsequent runs use the local cache.

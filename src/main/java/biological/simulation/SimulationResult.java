@@ -1,5 +1,9 @@
 package biological.simulation;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,5 +68,44 @@ public class SimulationResult {
         System.out.printf("  Net doublings    : %.2f (over %.1f h)%n",
             getNetDoublings(), timePoints.isEmpty() ? 0 : timePoints.get(timePoints.size() - 1)[0]);
         System.out.printf("  Final population : %.2fx initial%n", getFinalPopulation());
+    }
+
+    // ── Export ────────────────────────────────────────────────────────────
+
+    /**
+     * Writes the full time series to a CSV file.
+     * Columns: time_h, light_uE, growth_rate_h, population_rel
+     */
+    public void exportCsv(Path outputPath) throws IOException {
+        Files.createDirectories(outputPath.getParent());
+        try (BufferedWriter w = Files.newBufferedWriter(outputPath)) {
+            w.write("time_h,light_uE,growth_rate_h,population_rel\n");
+            for (double[] p : timePoints) {
+                w.write(String.format("%.4f,%.4f,%.6f,%.6f%n", p[0], p[3], p[2], p[1]));
+            }
+        }
+    }
+
+    /**
+     * Writes a JSON summary of key statistics.
+     * Hand-rolled — no external dependency.
+     */
+    public void exportSummaryJson(Path outputPath) throws IOException {
+        Files.createDirectories(outputPath.getParent());
+        double duration = timePoints.isEmpty() ? 0 : timePoints.get(timePoints.size() - 1)[0];
+        String json = String.format("""
+            {
+              "cell": "%s",
+              "duration_h": %.1f,
+              "peak_growth_rate_h": %.6f,
+              "min_doubling_time_h": %.4f,
+              "net_doublings": %.4f,
+              "final_population_fold": %.4f
+            }
+            """,
+            cellName, duration,
+            maxGrowthRate, getMinDoublingTime(),
+            getNetDoublings(), getFinalPopulation());
+        Files.writeString(outputPath, json);
     }
 }
