@@ -1,6 +1,7 @@
 package biological.properties;
 
 import biological.interfaces.Physiology;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,8 +100,8 @@ public class EukaryoticPhysiology implements Physiology {
     public Map<String, Double> getMonodConstants() {
         // Half-saturation constants for S. cerevisiae batch fermentation
         Map<String, Double> ks = new HashMap<>();
-        ks.put("glucose",   5.0);  // Ks ≈ 5 mg/L — yeast is efficient at low glucose
-        ks.put("nitrogen",  2.0);  // Ks for ammonium/organic N
+        ks.put("glucose",  1.0);  // Ks ≈ 0.5-2 mg/L for S. cerevisiae (Postma et al. 1989)
+        ks.put("nitrogen", 0.5);  // Ks NH₄⁺ ≈ 0.2-1 mM for yeast (Magasanik & Kaiser 2002)
         return Collections.unmodifiableMap(ks);
     }
 }

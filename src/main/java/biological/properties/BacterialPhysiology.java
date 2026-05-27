@@ -26,7 +26,7 @@ public class BacterialPhysiology implements Physiology {
         return 0.15;
     }
 
-    private double maxGrowthRate = 2.0;
+    private double maxGrowthRate = 1.7; // h⁻¹ — Monod 1949; E. coli K-12 in rich medium
     @Override
     public double getMaxGrowthRate() {
         return maxGrowthRate;
@@ -76,8 +76,8 @@ public class BacterialPhysiology implements Physiology {
     public Map<String, Double> getMonodConstants() {
         // Half-saturation constants for E. coli K-12 in LB-like medium (concentration units match env)
         Map<String, Double> ks = new HashMap<>();
-        ks.put("carbon",   10.0);  // Monod Ks for glucose ~10 mg/L equivalent
-        ks.put("nitrogen",  5.0);  // Ks for ammonium ~5 mg/L equivalent
+        ks.put("carbon",   1.0);  // Ks glucose ≈ 1 mg/L (Shehata & Marr 1971; Pirt 1975)
+        ks.put("nitrogen", 0.5);  // Ks NH₄⁺ ≈ 0.1-1 mg/L (Vallino et al. 1994)
         return Collections.unmodifiableMap(ks);
     }
 }

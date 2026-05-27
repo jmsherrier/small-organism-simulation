@@ -126,8 +126,8 @@ public class ExperimentalValidator {
     
     private Map<String, ExperimentalData> loadStandardValidationData() {
         Map<String, ExperimentalData> data = new HashMap<>();
-        data.put("MED4", new ExperimentalData(1.8, 0.55));
-        data.put("E. coli", new ExperimentalData(2.0, 0.50));
+        data.put("MED4", new ExperimentalData(0.15, 0.55)); // Partensky et al. 1999 — µ_max ≈ 0.1-0.15 h⁻¹
+        data.put("E. coli", new ExperimentalData(1.7, 0.50)); // Monod 1949; E. coli K-12 in rich medium
         data.put("Yeast", new ExperimentalData(0.5, 0.45));
         return data;
     }

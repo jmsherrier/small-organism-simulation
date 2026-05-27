@@ -44,9 +44,11 @@ public class SimulationEngine {
             population *= Math.exp(effectiveGrowth * TIME_STEP_HOURS);
 
             // Deplete nutrients stoichiometrically: consumed ∝ growth rate × quota × population
+            final double g = effectiveGrowth;
+            final double pop = population;
             java.util.Map<String, Double> quotas = cell.getPhysiology().getNutrientRequirements();
             java.util.Map<String, Double> depletion = new java.util.HashMap<>();
-            quotas.forEach((k, v) -> depletion.put(k, effectiveGrowth * v * population));
+            quotas.forEach((k, v) -> depletion.put(k, g * v * pop));
             env.depleteNutrients(depletion, TIME_STEP_HOURS);
 
             result.record(t, population, effectiveGrowth, light);

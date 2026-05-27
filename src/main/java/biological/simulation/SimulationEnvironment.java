@@ -65,10 +65,10 @@ public class SimulationEnvironment {
         return new Builder()
             .temperature(24.0).pH(8.1).salinity(0.035)
             .oxygen(0.21).peakLight(250.0).dayLength(12)
-            .nutrient("nitrogen",   5.0)
-            .nutrient("phosphorus", 0.3)
+            .nutrient("nitrogen",   0.5)   // µM — oligotrophic open ocean (Cavender-Bares et al. 2001)
+            .nutrient("phosphorus", 0.05)  // µM — North Atlantic HNLC surface values
             .nutrient("carbon",   100.0)
-            .nutrient("iron",       0.01);
+            .nutrient("iron",       0.001); // nM — typical open-ocean dissolved Fe
     }
 
     /** Standard E. coli laboratory culture: 37 °C, pH 7.0, LB-like nutrients. */

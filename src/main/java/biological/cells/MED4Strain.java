@@ -61,18 +61,21 @@ public class MED4Strain extends Prochlorococcus {
     
     @Override
     public double getGrowthRate() {
-        double baseRate = physiology.getMaxGrowthRate();
-        double sizeEffect = 1.0 / Math.sqrt(volumeMicron3);
-        return baseRate * sizeEffect;
+        // MED4 growth rate is not size-dependent across its natural size range (0.1-0.2 µm³)
+        // Partensky et al. 1999; Zinser et al. 2009 — μ_max ≈ 0.1-0.2 h⁻¹ in culture
+        return physiology.getMaxGrowthRate();
     }
-    
+
     @Override
     public double simulatePhotosynthesis(double lightIntensity) {
-        double maxRate = 2.0 * highLightAdaptation.getDivinylChlorophyllRatio();
-        double halfSaturation = 100 * (1.0 + highLightAdaptation.getZeaxanthinContent());
+        // Webb et al. (1974) photo-response curve: P/Pmax = (I/Ik) × exp(1 - I/Ik)
+        // where Ik (saturation irradiance) ≈ 100-150 µE m⁻² s⁻¹ for MED4 (Moore et al. 1995)
+        double pMax = highLightAdaptation.getDivinylChlorophyllRatio(); // relative units
+        double ik = 120.0; // saturation irradiance µE m⁻² s⁻¹ for MED4
         double photoinhibition = highLightAdaptation.calculatePhotoinhibition(lightIntensity);
-        
-        return maxRate * lightIntensity / (lightIntensity + halfSaturation) * (1 - photoinhibition);
+        if (lightIntensity <= 0) return 0.0;
+        double normalized = lightIntensity / ik;
+        return pMax * normalized * Math.exp(1.0 - normalized) * (1.0 - photoinhibition);
     }
     
     @Override
@@ -140,7 +143,7 @@ public class MED4Strain extends Prochlorococcus {
         public double getOptimalSalinity() {
             return 0.035;
         }
-        private double maxGrowthRate = 1.8;
+        private double maxGrowthRate = 0.15; // h⁻¹ — Partensky et al. 1999; Rocap et al. 2003
         public void setMaxGrowthRate(double maxGrowthRate) {
             this.maxGrowthRate = maxGrowthRate;
         }
@@ -203,7 +206,8 @@ public class MED4Strain extends Prochlorococcus {
         public int getPsbACopyNumber() { return psbACopyNumber; }
         
         public double calculatePhotoinhibition(double lightIntensity) {
-            return Math.max(0, lightIntensity - 500) * 0.001;
+            // Onset ~200 µE m⁻² s⁻¹ for MED4 (Partensky et al. 1999)
+            return Math.max(0, lightIntensity - 200) * 0.002;
         }
     }
     
