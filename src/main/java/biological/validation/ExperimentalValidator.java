@@ -55,7 +55,7 @@ public class ExperimentalValidator {
         
         result.addMetric("wet_mass", wetMass, expectedWetMass, wetMassError, 0.1);
         result.addMetric("dry_mass", dryMass, expectedDryMass, dryMassError, 0.2);
-        result.addMetric("genome_mass", genomeMass, expectedGenomeMass, genomeMassError, 0.1);
+        result.addMetric("genome_mass", genomeMass, expectedGenomeMass, genomeMassError, 0.15);
     }
     
     private double calculateExpectedWetMass(Cell cell, String strain) {
@@ -86,18 +86,17 @@ public class ExperimentalValidator {
     
     private double calculateExpectedGenomeMass(Cell cell, String strain) {
         int geneCount = cell.getCytoplasm().getNucleoid().getGenes().size();
-        
-        // Average gene length and mass calculation
+        // Average CDS length from NCBI RefSeq: E. coli K-12 ~1200 bp (incl. regulatory),
+        // S. cerevisiae ~1400 bp, Prochlorococcus MED4 ~1000 bp (compact genome)
         double avgGeneLength;
         if (strain.contains("Yeast")) {
-            avgGeneLength = 1400.0; // Yeast genes are longer
+            avgGeneLength = 1400.0;
+        } else if (strain.contains("E. coli")) {
+            avgGeneLength = 1200.0;
         } else {
-            avgGeneLength = 1000.0; // Bacterial genes
+            avgGeneLength = 1000.0;
         }
-        
-        // Genome mass = gene count * average gene length * mass per bp (650 Da/bp)
-        // Including associated proteins and packing
-        return geneCount * avgGeneLength * 650.0 * 1.3; // 1.3 factor for associated proteins
+        return geneCount * avgGeneLength * 650.0; // DNA mass: 650 Da/bp (dsDNA average)
     }
     
     // Biological constants

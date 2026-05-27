@@ -36,10 +36,11 @@ public class EukaryoticCell extends Cell {
     }
 
     private double calculateYeastGrowthFactor() {
+        // Oxidative phosphorylation coupling efficiency ~0.9 (Brand 2005)
         double mitochondrialEfficiency = 0.9;
-        double sizeFactor = 0.8;
+        // Organelle maintenance overhead ~5% of total energy (Rolfe & Brown 1997)
         double organelleEfficiency = 0.95;
-        return mitochondrialEfficiency * sizeFactor * organelleEfficiency;
+        return mitochondrialEfficiency * organelleEfficiency;
     }
 
     @Override
