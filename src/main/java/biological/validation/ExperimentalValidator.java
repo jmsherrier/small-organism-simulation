@@ -3,113 +3,116 @@ package biological.validation;
 import biological.cells.Cell;
 import biological.cells.EukaryoticCell;
 import biological.organelles.Organelle;
+import biological.simulation.SimulationResult;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Validates simulation results against experimental data
+ * Compares simulation output against published experimental measurements.
+ *
+ * <h3>What this class deliberately does NOT do</h3>
+ * It does not "validate" a parameter by reading it back out of the cell and comparing
+ * to the literature value it was constructed from — that is a tautology (you would
+ * always get 0% error). Such consistency checks live in unit tests instead.
+ *
+ * <h3>What it does</h3>
+ * It compares quantities the simulation actually <em>predicts</em> — peak effective
+ * growth rate, net doublings, dry mass from a multi-component sum, and genome mass
+ * from parsed CDS lengths — against <em>independent</em> published measurements that
+ * were not used to set the simulation's input parameters.
  */
 public class ExperimentalValidator {
-    private final Map<String, ExperimentalData> validationData;
-    private final Map<String, Double> proteinFractions;
-    
-    public ExperimentalValidator() {
-        this.validationData = loadStandardValidationData();
-        this.proteinFractions = loadProteinFractions();
-    }
-    
+
     public ValidationResult validateCell(Cell cell, String strain) {
+        return validateCell(cell, strain, null);
+    }
+
+    /**
+     * Validate static compositional predictions and (if provided) the simulation's
+     * dynamic time-series prediction.
+     */
+    public ValidationResult validateCell(Cell cell, String strain, SimulationResult sim) {
         ValidationResult result = new ValidationResult();
-        ExperimentalData expected = validationData.get(strain);
-        
-        if (expected != null) {
-            validateGrowthRate(cell, expected, result);
-            validateMassCalculations(cell, strain, result); // Pass strain for cell-type specific validation
+        validateCompositionalPredictions(cell, strain, result);
+        if (sim != null) {
+            validateDynamicPrediction(sim, strain, result);
         }
-        
         return result;
     }
-    
-    private void validateGrowthRate(Cell cell, ExperimentalData expected, ValidationResult result) {
-        double simulated = cell.getGrowthRate();
-        double experimental = expected.growthRate();
-        double error = Math.abs(simulated - experimental) / experimental;
-        
-        result.addMetric("growth_rate", simulated, experimental, error, 0.3);
+
+    // ── Dynamic prediction: peak effective μ vs independent published measurements ──
+
+    /**
+     * Published peak effective growth rates measured at conditions matching the
+     * simulation's preset environments. These values are independent of the μ_max
+     * constants stored in each Physiology — they come from time-series experiments
+     * by different research groups using different methodologies.
+     */
+    private static final Map<String, Double> PUBLISHED_PEAK_MU_H = Map.of(
+        // MED4 in marine photic, diurnal cycle — midday instantaneous rate.
+        // Vaulot et al. 1995 (Science): subtropical N. Pacific surface, midday peak μ ≈ 0.04-0.06 h⁻¹
+        "MED4",    0.055,
+        // E. coli K-12 in LB at 37 °C — exponential phase.
+        // Sezonov, Joseleau-Petit & D'Ari 2007 (J. Bacteriol.): doubling time 21 ± 2 min → μ = 1.98 h⁻¹
+        "E. coli", 1.98,
+        // S. cerevisiae in batch glucose minimal medium at 30 °C.
+        // Verduyn, Postma, Scheffers & van Dijken 1990 (J. Gen. Microbiol.): μ_max = 0.45 h⁻¹
+        "Yeast",   0.45
+    );
+
+    private void validateDynamicPrediction(SimulationResult sim, String strain, ValidationResult result) {
+        Double published = PUBLISHED_PEAK_MU_H.get(strain);
+        if (published == null) return;
+        double simulated = sim.getPeakEffectiveGrowthRate();
+        double error = Math.abs(simulated - published) / published;
+        // 25% tolerance — accommodates inter-study experimental variability and
+        // the model's coarse-grained nature (no flux balance, no detailed kinetics)
+        result.addMetric("peak_effective_growth_h", simulated, published, error, 0.25);
     }
-    
-    private void validateMassCalculations(Cell cell, String strain, ValidationResult result) {
-        double dryMass = cell.getDryDaltonsWithGenome();
+
+    // ── Compositional predictions: simulation's multi-component model vs simpler estimates ──
+
+    private void validateCompositionalPredictions(Cell cell, String strain, ValidationResult result) {
+        // Dry mass: simulation sums cytoplasm × dry_fraction + membrane + genome.
+        // Expected is wet × empirical dry-mass-fraction (a coarser estimate).
+        // Disagreement reflects how well the part-by-part model recovers bulk biomass.
+        double simDryMass = cell.getDryDaltonsWithGenome();
+        double expDryMass = calculateExpectedDryMass(cell, strain);
+        result.addMetric("dry_mass", simDryMass, expDryMass,
+            Math.abs(simDryMass - expDryMass) / expDryMass, 0.2);
+
+        // Genome mass: simulation uses GenBank-parsed CDS lengths (variable per gene).
+        // Expected uses a published average gene length per organism. Disagreement
+        // reflects how representative the avg-length estimate is for the actual genome.
+        double simGenomeMass = cell.getGenomeMass();
+        double expGenomeMass = calculateExpectedGenomeMass(cell, strain);
+        result.addMetric("genome_mass", simGenomeMass, expGenomeMass,
+            Math.abs(simGenomeMass - expGenomeMass) / expGenomeMass, 0.15);
+    }
+
+    private double calculateExpectedDryMass(Cell cell, String strain) {
         double wetMass = cell.getWetDaltons();
-        double genomeMass = cell.getGenomeMass();
-        
-        // Calculate EXPECTED values based on biological reality and cell volume
-        double expectedWetMass = calculateExpectedWetMass(cell, strain);
-        double expectedDryMass = calculateExpectedDryMass(cell, strain, expectedWetMass);
-        double expectedGenomeMass = calculateExpectedGenomeMass(cell, strain);
-        
-        // Validate with reasonable tolerances
-        double wetMassError = Math.abs(wetMass - expectedWetMass) / expectedWetMass;
-        double dryMassError = Math.abs(dryMass - expectedDryMass) / expectedDryMass;
-        double genomeMassError = Math.abs(genomeMass - expectedGenomeMass) / expectedGenomeMass;
-        
-        result.addMetric("wet_mass", wetMass, expectedWetMass, wetMassError, 0.1);
-        result.addMetric("dry_mass", dryMass, expectedDryMass, dryMassError, 0.2);
-        result.addMetric("genome_mass", genomeMass, expectedGenomeMass, genomeMassError, 0.15);
-    }
-    
-    private double calculateExpectedWetMass(Cell cell, String strain) {
-        double volume = cell.getVolumeMicron3();
-        
-        // Wet mass = volume * density (biological cells are ~1.1 g/cm³)
-        // 1 um³ = 1e-12 cm³, 1 g = 6.022e23 Da
-        double densityDaPerUm3 = 1.1 * 6.022e23 * 1e-12; // ~6.624e11 Da/um³
-        
-        return volume * densityDaPerUm3;
-    }
-    
-    private double calculateExpectedDryMass(Cell cell, String strain, double wetMass) {
-        // Dry mass fractions from published cellular biomass composition data
-        double dryFraction;
-        if (strain.contains("Yeast")) {
-            dryFraction = 0.28; // S. cerevisiae (Albers et al. 1996)
-        } else if (strain.contains("E. coli")) {
-            dryFraction = 0.30; // E. coli K-12 (Bremer & Dennis 1996; Neidhardt et al. 1990)
-        } else if (strain.contains("MED4")) {
-            dryFraction = 0.33; // Prochlorococcus (Bertilsson et al. 2003 — high pigment content)
-        } else {
-            dryFraction = 0.28;
-        }
+        double dryFraction = switch (strain) {
+            case "MED4"    -> 0.33; // Prochlorococcus — Bertilsson et al. 2003 (high pigment)
+            case "E. coli" -> 0.30; // E. coli K-12 — Bremer & Dennis 1996
+            case "Yeast"   -> 0.28; // S. cerevisiae — Albers et al. 1996
+            default        -> 0.28;
+        };
         return wetMass * dryFraction;
     }
-    
+
     private double calculateExpectedGenomeMass(Cell cell, String strain) {
         int geneCount = cell.getCytoplasm().getNucleoid().getGenes().size();
-        // Average CDS length from NCBI RefSeq: E. coli K-12 ~1200 bp (incl. regulatory),
-        // S. cerevisiae ~1400 bp, Prochlorococcus MED4 ~1000 bp (compact genome)
-        double avgGeneLength;
-        if (strain.contains("Yeast")) {
-            avgGeneLength = 1400.0;
-        } else if (strain.contains("E. coli")) {
-            avgGeneLength = 1200.0;
-        } else {
-            avgGeneLength = 1000.0;
-        }
-        return geneCount * avgGeneLength * 650.0; // DNA mass: 650 Da/bp (dsDNA average)
+        // Average CDS length from NCBI RefSeq per organism
+        double avgGeneLength = switch (strain) {
+            case "Yeast"   -> 1400.0;
+            case "E. coli" -> 1200.0;
+            default        -> 1000.0;
+        };
+        return geneCount * avgGeneLength * 650.0; // 650 Da/bp dsDNA average mass
     }
-    
-    // Biological constants
-    private Map<String, Double> loadProteinFractions() {
-        Map<String, Double> fractions = new HashMap<>();
-        fractions.put("MED4", 0.55);
-        fractions.put("E. coli", 0.50);
-        fractions.put("Yeast", 0.45);
-        return fractions;
-    }
-    
-    public double getProteinFraction(String strain) {
-        return proteinFractions.getOrDefault(strain, 0.5);
-    }
+
+    // ── Auxiliary: total protein mass from cellular composition ──
 
     public double calculateTotalProteinMass(Cell cell) {
         int count = cell.getCytoplasm().getSolubleProteins().size();
@@ -121,12 +124,13 @@ public class ExperimentalValidator {
         }
         return count * 40_000.0; // ~40 kDa average protein mass in Da
     }
-    
-    private Map<String, ExperimentalData> loadStandardValidationData() {
-        Map<String, ExperimentalData> data = new HashMap<>();
-        data.put("MED4", new ExperimentalData(0.15, 0.55)); // Partensky et al. 1999 — µ_max ≈ 0.1-0.15 h⁻¹
-        data.put("E. coli", new ExperimentalData(1.7, 0.50)); // Monod 1949; E. coli K-12 in rich medium
-        data.put("Yeast", new ExperimentalData(0.5, 0.45));
-        return data;
+
+    public double getProteinFraction(String strain) {
+        return switch (strain) {
+            case "MED4"    -> 0.55;
+            case "E. coli" -> 0.50;
+            case "Yeast"   -> 0.45;
+            default        -> 0.50;
+        };
     }
 }

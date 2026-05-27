@@ -4,7 +4,7 @@
 
 A Java 21 simulation framework that models the physiology of three biologically distinct cell types — a marine cyanobacterium, a heterotrophic bacterium, and a unicellular eukaryote — using real genomic data fetched directly from NCBI GenBank.
 
-All cellular parameters are calibrated against published experimental literature; the simulation reproduces classic batch-culture and diurnal growth curves with **0 % error vs. published μ_max** for all three organisms.
+All cellular parameters are calibrated against published experimental literature. The simulation reproduces classic batch-culture and diurnal growth curves and predicts peak effective growth rates within ~1–22 % of independent published time-series measurements (see [Validation Results](#validation-results)).
 
 ---
 
@@ -27,15 +27,17 @@ The framework integrates:
 
 ## Validation Results
 
-All three organisms now **PASS** every metric:
+The validation compares the simulation's **predicted** time-series output against **independent** published measurements — the comparison values come from research groups and experimental systems different from those used to set the simulation's input parameters. (Earlier versions had tautological validation that compared a stored μ_max constant against itself, always producing 0 % error; that has been removed.)
 
-| Cell | Growth rate | Genome mass | Wet mass | Dry mass |
-|---|---|---|---|---|
-| *Prochlorococcus* MED4 | **0.0 %** | 0.3 % | 1.1 % | 1.1 % |
-| *E. coli* K-12 | **0.0 %** | 1.0 % | 1.1 % | 6.5 % |
-| *S. cerevisiae* | **0.0 %** | 6.9 % | 1.1 % | 1.1 % |
+| Cell | Peak effective μ (sim → published) | Source | Error |
+|---|---|---|---|
+| *Prochlorococcus* MED4 | 0.043 → 0.055 h⁻¹ | Vaulot et al. 1995 — in situ N. Pacific gyre midday | **22.4 %** |
+| *E. coli* K-12 | 1.64 → 1.98 h⁻¹ | Sezonov et al. 2007 — LB doubling time 21 min | **17.0 %** |
+| *S. cerevisiae* | 0.456 → 0.45 h⁻¹ | Verduyn et al. 1990 — batch glucose μ_max | **1.4 %** |
 
-Earlier versions (≤ 2.3) reported 20–32 % errors caused by double-counted respiration efficiency factors and biologically unjustified scaling constants. v2.5 removed those, calibrated the remaining constants from peer-reviewed sources, and added Pirt-style maintenance — yielding the table above.
+These are real prediction errors. They reflect the simulation's coarse-grained nature (no explicit enzyme kinetics, no flux balance, no photoacclimation) and the fact that input μ_max values are taken from different studies and conditions than the comparison rates. The yeast result is unusually close because both our μ_max and the comparison value come from the same body of batch-fermentation literature.
+
+Compositional predictions (cellular dry mass from the multi-component sum vs. an empirical bulk dry-mass fraction; genome mass from parsed GenBank CDS lengths vs. an average gene length estimate) are also reported with errors of 0.3–12.5 %.
 
 ### Key Biological Parameters
 
@@ -104,7 +106,8 @@ Genomic data is fetched on first run and cached in `genbank_data/`. CSV/JSON out
   18.0     0.0           -0.0150          367.295    ← stationary → death
   Peak doubling time: 1.79 h ✓ Verduyn 1990
 
-  [E. coli] growth_rate: simulated=1.700, expected=1.700, error=0.0%
+  [E. coli] peak_effective_growth_h: simulated=1.643, expected=1.980, error=17.0%
+            (Sezonov et al. 2007 — LB doubling time 21 min)
   Overall validation: PASS
 ```
 

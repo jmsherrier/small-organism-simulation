@@ -64,12 +64,6 @@ public class EukaryoticCell extends Cell {
         return consumption;
     }
 
-    /** Dry mass uses a fixed 28% fraction matching yeast experimental data. */
-    @Override
-    public double getDryDaltonsWithGenome() {
-        return getWetDaltons() * 0.28;
-    }
-
     public List<Organelle> getOrganelles() { return organelles; }
     public Nucleus getNucleus()            { return nucleus; }
 

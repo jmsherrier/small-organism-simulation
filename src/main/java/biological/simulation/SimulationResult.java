@@ -44,6 +44,14 @@ public class SimulationResult {
     }
 
     public double getMaxGrowthRate() { return maxGrowthRate; }
+
+    /**
+     * Peak effective specific growth rate (h⁻¹) observed during the run.
+     * Unlike μ_max stored in physiology, this is what the simulation actually predicts:
+     * it emerges from μ_max combined with environmental scaling, Monod limitation,
+     * and maintenance subtraction at the conditions of the run.
+     */
+    public double getPeakEffectiveGrowthRate() { return maxGrowthRate; }
     public String getCellName()      { return cellName; }
     public List<double[]> getTimePoints() { return timePoints; }
 

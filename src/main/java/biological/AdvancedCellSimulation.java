@@ -60,27 +60,27 @@ public class AdvancedCellSimulation {
             section("3. TIME-SERIES SIMULATION  (24 h, Δt = 15 min)");
             SimulationEngine engine = new SimulationEngine();
 
-            runAndExport(engine, med4Cell,
+            SimulationResult med4Result = runAndExport(engine, med4Cell,
                 SimulationEnvironment.marinePhotic().build(),
                 "Prochlorococcus MED4 — marine euphotic zone, 12 h:12 h L:D",
                 config.getMed4Duration(), 12, "MED4", config.getOutputDir());
 
-            runAndExport(engine, ecoliCell,
+            SimulationResult ecoliResult = runAndExport(engine, ecoliCell,
                 SimulationEnvironment.laboratoryAerobic().build(),
                 "Escherichia coli K-12 — laboratory aerobic, 37 °C",
                 config.getEcoliDuration(), 8, "ECOLI", config.getOutputDir());
 
-            runAndExport(engine, yeastCell,
+            SimulationResult yeastResult = runAndExport(engine, yeastCell,
                 SimulationEnvironment.yeastFermentation().build(),
                 "Saccharomyces cerevisiae — batch fermentation, 30 °C",
                 config.getYeastDuration(), 8, "YEAST", config.getOutputDir());
 
             // ── 4. Experimental validation ────────────────────────────────
-            section("4. EXPERIMENTAL VALIDATION");
+            section("4. EXPERIMENTAL VALIDATION  (vs independent published measurements)");
             ExperimentalValidator validator = new ExperimentalValidator();
-            printValidation(validator, med4Cell,  "MED4");
-            printValidation(validator, ecoliCell, "E. coli");
-            printValidation(validator, yeastCell, "Yeast");
+            printValidation(validator, med4Cell,  "MED4",    med4Result);
+            printValidation(validator, ecoliCell, "E. coli", ecoliResult);
+            printValidation(validator, yeastCell, "Yeast",   yeastResult);
 
             // ── 5. Sensitivity analysis ───────────────────────────────────
             section("5. SENSITIVITY ANALYSIS  (MED4, 10% parameter perturbation)");
@@ -147,7 +147,7 @@ public class AdvancedCellSimulation {
         }
     }
 
-    private static void runAndExport(SimulationEngine engine, Cell cell,
+    private static SimulationResult runAndExport(SimulationEngine engine, Cell cell,
                                      SimulationEnvironment env, String label,
                                      double hours, int rows, String filePrefix, String outputDir) {
         System.out.println();
@@ -166,12 +166,14 @@ public class AdvancedCellSimulation {
         } catch (IOException e) {
             System.err.println("  Warning: could not write output files: " + e.getMessage());
         }
+        return result;
     }
 
-    private static void printValidation(ExperimentalValidator validator, Cell cell, String strain) {
+    private static void printValidation(ExperimentalValidator validator, Cell cell,
+                                        String strain, SimulationResult sim) {
         System.out.println();
         System.out.println("  [" + strain + "]");
-        ValidationResult r = validator.validateCell(cell, strain);
+        ValidationResult r = validator.validateCell(cell, strain, sim);
         r.printResults();
     }
 }
