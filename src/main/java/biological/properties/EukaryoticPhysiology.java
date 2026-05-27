@@ -13,6 +13,9 @@ public class EukaryoticPhysiology implements Physiology {
     private final Map<String, Double> nutrientQuotas;
     private final Map<String, Double> energyYields;
     private double maxGrowthRate;
+    // S. cerevisiae cardinal temperatures (Salvadó et al. 2011; Arroyo-López et al. 2009)
+    private static final CardinalTemperatureModel TEMP_MODEL =
+        new CardinalTemperatureModel(4.0, 30.0, 42.0);
 
     public EukaryoticPhysiology() {
         this.maxGrowthRate = 0.5;
@@ -66,7 +69,7 @@ public class EukaryoticPhysiology implements Physiology {
     @Override
     public double calculateEnvironmentalEffect(double temperature, double pH,
                                                double salinity, double oxygen, double light) {
-        double tempEffect     = Math.max(0, 1.0 - Math.abs(temperature - 30.0) / 20.0);
+        double tempEffect     = TEMP_MODEL.scaling(temperature);
         double pHEffect       = Math.max(0, 1.0 - Math.abs(pH - 5.5) / 3.0);
         double salinityEffect = Math.max(0, 1.0 - Math.abs(salinity - 0.1) / 0.15);
         double oxygenEffect   = oxygen / (oxygen + 0.01);
@@ -86,6 +89,12 @@ public class EukaryoticPhysiology implements Physiology {
             case "oxidative" -> 0.5;
             default          -> 0.5;
         };
+    }
+
+    @Override
+    public double getMaintenanceCoefficient() {
+        // S. cerevisiae maintenance ≈ 0.015 h⁻¹ (Verduyn et al. 1990)
+        return 0.015;
     }
 
     public double getEnergyYield(String substrate, String pathway) {

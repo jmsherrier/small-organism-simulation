@@ -40,11 +40,15 @@ public class SimulationEngine {
             double monodFactor = MonodKinetics.computeLimitationFactor(
                 cell.getPhysiology().getMonodConstants(), env);
 
-            double effectiveGrowth = cell.getGrowthRate() * envEffect * monodFactor;
+            // Pirt 1965 maintenance: μ_eff = μ_gross − m_S
+            double grossGrowth = cell.getGrowthRate() * envEffect * monodFactor;
+            double maintenance = cell.getPhysiology().getMaintenanceCoefficient();
+            double effectiveGrowth = grossGrowth - maintenance;
             population *= Math.exp(effectiveGrowth * TIME_STEP_HOURS);
 
-            // Deplete nutrients stoichiometrically: consumed ∝ growth rate × quota × population
-            final double g = effectiveGrowth;
+            // Deplete nutrients by gross uptake (always ≥ 0) — substrate is consumed
+            // during maintenance metabolism even when net growth is zero or negative.
+            final double g = grossGrowth;
             final double pop = population;
             java.util.Map<String, Double> quotas = cell.getPhysiology().getNutrientRequirements();
             java.util.Map<String, Double> depletion = new java.util.HashMap<>();

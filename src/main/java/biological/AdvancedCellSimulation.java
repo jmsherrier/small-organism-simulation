@@ -107,7 +107,7 @@ public class AdvancedCellSimulation {
     private static void printHeader() {
         System.out.println(LINE);
         System.out.println("  PROCHLOROCOCCUS CELLULAR SIMULATION FRAMEWORK");
-        System.out.println("  Version 2.4  |  Java 21  |  NCBI GenBank Integration");
+        System.out.println("  Version 2.5  |  Java 21  |  NCBI GenBank Integration");
         System.out.println(LINE);
         System.out.println();
     }

@@ -25,4 +25,15 @@ public interface Physiology {
     default Map<String, Double> getMonodConstants() {
         return Map.of();
     }
+
+    /**
+     * Maintenance energy coefficient m_S (h⁻¹) — fraction of biomass that must be
+     * "renewed" per hour to maintain cellular function, independent of growth.
+     * Pirt 1965: μ_eff = μ_gross − m_S.
+     * Typical values: 0.02–0.05 h⁻¹ for bacteria, 0.01–0.03 h⁻¹ for slow-growing cyanobacteria.
+     * Default 0 keeps old behavior for any implementation that hasn't been calibrated.
+     */
+    default double getMaintenanceCoefficient() {
+        return 0.0;
+    }
 }

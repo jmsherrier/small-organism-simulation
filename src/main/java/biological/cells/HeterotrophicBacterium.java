@@ -24,7 +24,9 @@ public class HeterotrophicBacterium extends Cell {
 
     @Override
     public double getGrowthRate() {
-        return physiology.getMaxGrowthRate() * respiration.getRespirationEfficiency();
+        // μ_max already encompasses observed respiration coupling efficiency
+        // (Monod 1949; Bremer & Dennis 1996 report empirical μ, not maximum theoretical)
+        return physiology.getMaxGrowthRate();
     }
 
     @Override

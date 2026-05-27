@@ -28,19 +28,10 @@ public class EukaryoticCell extends Cell {
 
     @Override
     public double getGrowthRate() {
-        double baseRate = physiology.getMaxGrowthRate();
-        double energyBalance = calculateEnergyBalance();
-        double nutrientLimitation = calculateNutrientLimitation();
-        double yeastGrowthFactor = calculateYeastGrowthFactor();
-        return baseRate * energyBalance * nutrientLimitation * yeastGrowthFactor;
-    }
-
-    private double calculateYeastGrowthFactor() {
-        // Oxidative phosphorylation coupling efficiency ~0.9 (Brand 2005)
-        double mitochondrialEfficiency = 0.9;
-        // Organelle maintenance overhead ~5% of total energy (Rolfe & Brown 1997)
-        double organelleEfficiency = 0.95;
-        return mitochondrialEfficiency * organelleEfficiency;
+        // μ_max already empirically encompasses mitochondrial/organelle energy overhead
+        // (Verduyn et al. 1990 — observed in batch culture, not theoretical maximum).
+        // Environmental and Monod factors are applied by SimulationEngine.
+        return physiology.getMaxGrowthRate();
     }
 
     @Override

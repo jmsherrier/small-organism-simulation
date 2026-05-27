@@ -127,6 +127,10 @@ public class MED4Strain extends Prochlorococcus {
     
     public static class MED4Physiology implements Physiology {
         private final Map<String, Double> nutrientQuotas;
+        // MED4 cardinal temperatures — high-light ecotype, narrow tropical range
+        // (Johnson et al. 2006; Zinser et al. 2007 — growth from ~13 °C to ~30 °C)
+        private static final biological.properties.CardinalTemperatureModel TEMP_MODEL =
+            new biological.properties.CardinalTemperatureModel(13.0, 24.0, 30.0);
         
         public MED4Physiology() {
             nutrientQuotas = new HashMap<>();
@@ -156,8 +160,9 @@ public class MED4Strain extends Prochlorococcus {
         
         @Override
         public double calculateEnvironmentalEffect(double temperature, double pH, double salinity, double oxygen, double light) {
-            double tempEffect = 1.0 - Math.abs(temperature - 24.0) / 10.0;
-            double lightEffect = light / (light + 250.0);
+            double tempEffect = TEMP_MODEL.scaling(temperature);
+            // Michaelis-Menten saturation; half-sat at I_k = 120 µE m⁻² s⁻¹ (Moore et al. 1995)
+            double lightEffect = light / (light + 120.0);
             double salinityEffect = 1.0 - Math.abs(salinity - 0.035) / 0.015;
             return Math.max(0, Math.min(1, tempEffect * lightEffect * salinityEffect));
         }
@@ -178,6 +183,12 @@ public class MED4Strain extends Prochlorococcus {
         @Override public double getEnergyProductionRate() { return 120.0; }
         @Override public double getStressTolerance(String stressor) { return 0.8; }
         @Override public boolean canFormSpores() { return false; }
+
+        @Override
+        public double getMaintenanceCoefficient() {
+            // Slow-growing oligotrophic cyanobacterium — low maintenance (Geider & Osborne 1989)
+            return 0.005;
+        }
 
         @Override
         public java.util.Map<String, Double> getMonodConstants() {

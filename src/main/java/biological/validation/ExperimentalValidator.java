@@ -69,18 +69,17 @@ public class ExperimentalValidator {
     }
     
     private double calculateExpectedDryMass(Cell cell, String strain, double wetMass) {
-        // Dry mass fraction varies by cell type
+        // Dry mass fractions from published cellular biomass composition data
         double dryFraction;
         if (strain.contains("Yeast")) {
-            dryFraction = 0.28; // Yeast: 28% dry mass
+            dryFraction = 0.28; // S. cerevisiae (Albers et al. 1996)
         } else if (strain.contains("E. coli")) {
-            dryFraction = 0.25; // E. coli: 25% dry mass
+            dryFraction = 0.30; // E. coli K-12 (Bremer & Dennis 1996; Neidhardt et al. 1990)
         } else if (strain.contains("MED4")) {
-            dryFraction = 0.30; // MED4: 30% dry mass (cyanobacteria have more pigments)
+            dryFraction = 0.33; // Prochlorococcus (Bertilsson et al. 2003 — high pigment content)
         } else {
-            dryFraction = 0.25; // Default
+            dryFraction = 0.28;
         }
-        
         return wetMass * dryFraction;
     }
     

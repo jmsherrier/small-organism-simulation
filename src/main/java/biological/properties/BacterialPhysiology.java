@@ -8,7 +8,10 @@ import java.util.*;
  */
 public class BacterialPhysiology implements Physiology {
     private final Map<String, Double> nutrientQuotas;
-    
+    // E. coli K-12 cardinal temperatures (Ratkowsky et al. 1983; Membré et al. 2005)
+    private static final CardinalTemperatureModel TEMP_MODEL =
+        new CardinalTemperatureModel(7.5, 37.0, 49.0);
+
     public BacterialPhysiology() {
         nutrientQuotas = new HashMap<>();
         nutrientQuotas.put("carbon", 0.5);
@@ -59,9 +62,9 @@ public class BacterialPhysiology implements Physiology {
     }
     
     @Override
-    public double calculateEnvironmentalEffect(double temperature, double pH, double salinity, 
+    public double calculateEnvironmentalEffect(double temperature, double pH, double salinity,
                                              double oxygen, double light) {
-        double tempEffect = 1.0 - Math.abs(temperature - 37.0) / 20.0;
+        double tempEffect = TEMP_MODEL.scaling(temperature);
         double pHEffect = 1.0 - Math.abs(pH - 7.0) / 3.0;
         double salinityEffect = 1.0 - Math.abs(salinity - 0.15) / 0.1;
         return Math.max(0, Math.min(1, tempEffect * pHEffect * salinityEffect));
@@ -71,6 +74,12 @@ public class BacterialPhysiology implements Physiology {
     @Override public double getEnergyProductionRate() { return 100.0; }
     @Override public double getStressTolerance(String stressor) { return 0.7; }
     @Override public boolean canFormSpores() { return true; }
+
+    @Override
+    public double getMaintenanceCoefficient() {
+        // E. coli K-12 maintenance ≈ 0.04 h⁻¹ (Pirt 1965; Tempest & Neijssel 1984)
+        return 0.04;
+    }
 
     @Override
     public Map<String, Double> getMonodConstants() {
